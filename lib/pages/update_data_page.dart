@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:twins_meet/model/twins_model.dart';
 
-class TwinFormData {
+class UpdateTwinFormData {
   TextEditingController fullNameController = TextEditingController();
   TextEditingController houseNameController = TextEditingController();
   TextEditingController postOfficeController = TextEditingController();
   TextEditingController districtController = TextEditingController();
-  TextEditingController stateController = TextEditingController(text: 'Kerala');
-  TextEditingController countryController = TextEditingController(text: 'India');
+  TextEditingController stateController = TextEditingController();
+  TextEditingController countryController = TextEditingController();
   TextEditingController pincodeController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
 
@@ -22,17 +23,36 @@ class TwinFormData {
     pincodeController.dispose();
     phoneController.dispose();
   }
+
+  void populateFromTwin(Twin twin) {
+    fullNameController.text = twin.fullName;
+    houseNameController.text = twin.houseName;
+    postOfficeController.text = twin.postOffice;
+    districtController.text = twin.district;
+    stateController.text = twin.state;
+    countryController.text = twin.country;
+    pincodeController.text = twin.pincode;
+    phoneController.text = twin.phone;
+  }
 }
 
-class TwinsDataForm extends StatefulWidget {
+class UpdateTwinsDataPage extends StatefulWidget {
+  final TwinFamily family;
+
+  const UpdateTwinsDataPage({
+    super.key,
+    required this.family,
+  });
+
   @override
-  _TwinsDataFormState createState() => _TwinsDataFormState();
+  _UpdateTwinsDataPageState createState() => _UpdateTwinsDataPageState();
 }
 
-class _TwinsDataFormState extends State<TwinsDataForm> {
-  List<TwinFormData> twins = [];
+class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
+  List<UpdateTwinFormData> twins = [];
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _isUpdating = false;
 
   // Firebase Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -40,7 +60,15 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
   @override
   void initState() {
     super.initState();
-    twins.add(TwinFormData());
+    _populateExistingData();
+  }
+
+  void _populateExistingData() {
+    for (Twin twin in widget.family.twins) {
+      UpdateTwinFormData formData = UpdateTwinFormData();
+      formData.populateFromTwin(twin);
+      twins.add(formData);
+    }
   }
 
   @override
@@ -53,17 +81,16 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
 
   void _addTwin(int previousIndex) {
     setState(() {
-      TwinFormData newTwin = TwinFormData();
+      UpdateTwinFormData newTwin = UpdateTwinFormData();
       
       if (previousIndex < twins.length) {
-        TwinFormData previousTwin = twins[previousIndex];
+        UpdateTwinFormData previousTwin = twins[previousIndex];
         newTwin.houseNameController.text = previousTwin.houseNameController.text;
         newTwin.postOfficeController.text = previousTwin.postOfficeController.text;
         newTwin.districtController.text = previousTwin.districtController.text;
         newTwin.stateController.text = previousTwin.stateController.text;
         newTwin.countryController.text = previousTwin.countryController.text;
         newTwin.pincodeController.text = previousTwin.pincodeController.text;
-        newTwin.phoneController.text = previousTwin.phoneController.text;
       }
       
       twins.add(newTwin);
@@ -80,7 +107,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
   }
 
   Widget _buildTwinForm(int index) {
-    TwinFormData twin = twins[index];
+    UpdateTwinFormData twin = twins[index];
     
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
@@ -197,7 +224,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF3B82F6),
+              color: Color(0xFF6E6588)
             ),
           ),
         ),
@@ -275,16 +302,16 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
         icon: Icon(Icons.add, size: 18.w),
         label: Text('Add Another Twin'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF10B981),
+          backgroundColor: Color(0xFF416587),
           foregroundColor: Colors.white,
-          shadowColor: Color(0xFF10B981).withOpacity(0.3),
+          shadowColor: Color(0xFF416587).withOpacity(0.3),
           elevation: 2,
         ),
       ),
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildActionButtons() {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(24.w),
@@ -298,45 +325,74 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
           ),
         ],
       ),
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _submitForm,
-        child: _isLoading
-            ? SizedBox(
-                height: 20.h,
-                width: 20.w,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: _isUpdating ? null : () => Navigator.of(context).pop(),
+              child: Text('Cancel'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Color(0xFF6B7280),
+                side: BorderSide(color: Color(0xFFD1D5DB)),
+                padding: EdgeInsets.symmetric(vertical: 16.h),
+                textStyle: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
                 ),
-              )
-            : Text('Submit All Data'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF1E40AF),
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          textStyle: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+            ),
           ),
-          shadowColor: Color(0xFF1E40AF).withOpacity(0.3),
-          elevation: 3,
-        ),
+          SizedBox(width: 16.w),
+          Expanded(
+            flex: 2,
+            child: ElevatedButton(
+              onPressed: _isUpdating ? null : _updateForm,
+              child: _isUpdating
+                  ? SizedBox(
+                      height: 20.h,
+                      width: 20.w,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text('Update Data'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF6E6588),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 16.h),
+                textStyle: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+                shadowColor: Color(0xFF1E40AF).withOpacity(0.3),
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _submitForm() async {
+  Future<void> _updateForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        _isLoading = true;
+        _isUpdating = true;
       });
 
       try {
-        // Prepare data for Firebase
+        // Prepare updated data for Firebase
         List<Map<String, dynamic>> twinsData = [];
         
         for (int i = 0; i < twins.length; i++) {
-          TwinFormData twin = twins[i];
+          UpdateTwinFormData twin = twins[i];
           twinsData.add({
             'fullName': twin.fullNameController.text.trim(),
             'houseName': twin.houseNameController.text.trim(),
@@ -350,42 +406,44 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
           });
         }
 
-        // Create a document with timestamp and twins data
-        Map<String, dynamic> submissionData = {
+        // Update document data
+        Map<String, dynamic> updatedData = {
           'twins': twinsData,
           'totalTwins': twins.length,
-          'submittedAt': FieldValue.serverTimestamp(),
-          'submittedBy': 'user_id', // Replace with actual user ID if you have authentication
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+          'submittedAt': widget.family.submittedAt, // Keep original submission time
+          'submittedBy': widget.family.submittedBy, // Keep original submitter
         };
 
-        // Save to Firebase Firestore
-        DocumentReference docRef = await _firestore
+        // Update in Firebase Firestore
+        await _firestore
             .collection('twins_submissions')
-            .add(submissionData);
+            .doc(widget.family.id)
+            .update(updatedData);
 
-        print('Data saved with ID: ${docRef.id}');
-        print('Twins Data: $twinsData');
+        print('Data updated successfully for document ID: ${widget.family.id}');
+        print('Updated Twins Data: $twinsData');
 
         setState(() {
-          _isLoading = false;
+          _isUpdating = false;
         });
 
         // Show success dialog
-        _showSuccessDialog(docRef.id);
+        _showSuccessDialog();
 
       } catch (error) {
         setState(() {
-          _isLoading = false;
+          _isUpdating = false;
         });
         
         // Show error dialog
         _showErrorDialog(error.toString());
-        print('Error saving data: $error');
+        print('Error updating data: $error');
       }
     }
   }
 
-  void _showSuccessDialog(String documentId) {
+  void _showSuccessDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -410,7 +468,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
               ),
               SizedBox(width: 12.w),
               Text(
-                'Success!',
+                'Updated Successfully!',
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
@@ -423,7 +481,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Data for ${twins.length} twin(s) has been successfully saved to Firebase.',
+                'Data for ${twins.length} twin(s) has been successfully updated in Firebase.',
                 style: TextStyle(
                   fontSize: 14.sp,
                   color: Color(0xFF6B7280),
@@ -431,7 +489,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
               ),
               SizedBox(height: 8.h),
               Text(
-                'Document ID: $documentId',
+                'Document ID: ${widget.family.id}',
                 style: TextStyle(
                   fontSize: 12.sp,
                   color: Color(0xFF9CA3AF),
@@ -441,30 +499,10 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Reset form
-                setState(() {
-                  for (var twin in twins) {
-                    twin.dispose();
-                  }
-                  twins.clear();
-                  twins.add(TwinFormData());
-                });
-              },
-              child: Text(
-                'Add More',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF6B7280),
-                ),
-              ),
-            ),
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop(true); // Return to previous page with success flag
               },
               child: Text('Done'),
               style: ElevatedButton.styleFrom(
@@ -503,7 +541,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
               ),
               SizedBox(width: 12.w),
               Text(
-                'Error',
+                'Update Failed',
                 style: TextStyle(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w600,
@@ -512,7 +550,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
             ],
           ),
           content: Text(
-            'Failed to save data to Firebase:\n$error',
+            'Failed to update data in Firebase:\n$error',
             style: TextStyle(
               fontSize: 14.sp,
               color: Color(0xFF6B7280),
@@ -536,40 +574,89 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
     );
   }
 
+  Widget _buildInfoHeader() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20.w),
+      color: Color(0xFFF8FAFC),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: Color(0xFF3B82F6).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: Color(0xFF6E6588),
+                  size: 20.w,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Updating ${twins.length} twin(s) data',
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF374151),
+                      ),
+                    ),
+                    Text(
+                      'Originally submitted: ${_formatDate(widget.family.submittedAt)}',
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          LinearProgressIndicator(
+            value: twins.length / 10, // Adjust max as needed
+            backgroundColor: Color(0xFFE5E7EB),
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6E6588)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Twins Data Collection'),
+        title: Text('Update Twins Data'),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        foregroundColor: Color(0xFF374151),
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(1.0),
+          child: Container(
+            color: Color(0xFFE5E7EB),
+            height: 1.0,
+          ),
+        ),
       ),
       body: Form(
         key: _formKey,
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(20.w),
-              color: Colors.white,
-              child: Column(
-                children: [
-                  Text(
-                    'Collecting data for ${twins.length} twin(s)',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF374151),
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  LinearProgressIndicator(
-                    value: twins.length / 5, 
-                    backgroundColor: Color(0xFFE5E7EB),
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
-                  ),
-                ],
-              ),
-            ),
+            _buildInfoHeader(),
             Expanded(
               child: ListView.builder(
                 padding: EdgeInsets.only(top: 16.h, bottom: 16.h),
@@ -577,7 +664,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
                 itemBuilder: (context, index) => _buildTwinForm(index),
               ),
             ),
-            _buildSubmitButton(),
+            _buildActionButtons(),
           ],
         ),
       ),
