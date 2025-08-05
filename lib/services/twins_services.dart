@@ -26,13 +26,24 @@ class TwinService {
   
   // Pagination settings
   static const int pageSize = 6; // Adjust based on your needs
+  
+  // Cache to prevent duplicate loading - IMPROVED
+  final Set<String> _loadedDocumentIds = {};
 
-  /// Load families with pagination
+  /// Reset cache when refreshing data - FIXED
+  void resetCache() {
+    _loadedDocumentIds.clear();
+    print('TwinService: Cache reset - loaded IDs cleared');
+  }
+
+  /// Load families with pagination - FIXED duplicate prevention
   Future<PaginatedResult> loadFamiliesFromFirebase({
     DocumentSnapshot? lastDocument,
     int limit = pageSize,
   }) async {
     try {
+      print('TwinService: Loading families - lastDocument: ${lastDocument?.id}, limit: $limit');
+      
       Query query = _firestore
           .collection('twins_submissions')
           .orderBy('submittedAt', descending: true)
@@ -44,7 +55,9 @@ class TwinService {
       }
 
       final QuerySnapshot snapshot = await query.get();
+      print('TwinService: Fetched ${snapshot.docs.length} documents from Firestore');
       
+      // Convert all documents to families first (don't filter by cache here for pagination)
       final families = snapshot.docs
           .map((doc) => TwinFamily.fromFirestore(doc))
           .toList();
@@ -53,74 +66,134 @@ class TwinService {
       final hasMore = snapshot.docs.length == limit;
       final lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
 
+      print('TwinService: Returning ${families.length} families, hasMore: $hasMore');
+
       return PaginatedResult(
         families: families,
         lastDocument: lastDoc,
         hasMore: hasMore,
       );
     } catch (e) {
+      print('TwinService: Error loading families: $e');
       throw Exception('Error loading data: $e');
     }
   }
 
-  /// Load all families (for export functionality)
+  /// Load all families (for export functionality) with duplicate prevention
   Future<List<TwinFamily>> loadAllFamiliesForExport() async {
     try {
+      print('TwinService: Loading all families for export');
+      
       final QuerySnapshot snapshot = await _firestore
           .collection('twins_submissions')
           .orderBy('submittedAt', descending: true)
           .get();
 
-      return snapshot.docs
-          .map((doc) => TwinFamily.fromFirestore(doc))
-          .toList();
+      print('TwinService: Fetched ${snapshot.docs.length} documents for export');
+
+      // Use a Map to ensure uniqueness by document ID
+      final Map<String, TwinFamily> uniqueFamilies = {};
+      
+      for (final doc in snapshot.docs) {
+        if (!uniqueFamilies.containsKey(doc.id)) {
+          uniqueFamilies[doc.id] = TwinFamily.fromFirestore(doc);
+        }
+      }
+
+      print('TwinService: Returning ${uniqueFamilies.length} unique families for export');
+      return uniqueFamilies.values.toList();
     } catch (e) {
+      print('TwinService: Error loading all families: $e');
       throw Exception('Error loading data: $e');
     }
   }
 
-  /// Search families with pagination
+  /// Search families with pagination and duplicate prevention
   Future<List<TwinFamily>> searchFamilies(String query) async {
     try {
-      // For search, we might need to load more data or implement server-side search
-      // This is a simple client-side search implementation
+      print('TwinService: Searching families with query: "$query"');
+      
+      // For search, load all data and filter - ensure no duplicates
       final allFamilies = await loadAllFamiliesForExport();
-      return filterFamilies(allFamilies, query);
+      final filteredFamilies = filterFamilies(allFamilies, query);
+      
+      print('TwinService: Search returned ${filteredFamilies.length} results');
+      return filteredFamilies;
     } catch (e) {
+      print('TwinService: Error searching families: $e');
       throw Exception('Error searching families: $e');
     }
   }
 
-  /// Delete a family by ID
+  /// Delete a family by ID - IMPROVED
   Future<void> deleteFamily(String familyId) async {
     try {
+      print('TwinService: Deleting family with ID: $familyId');
+      
       await _firestore.collection('twins_submissions').doc(familyId).delete();
+      
+      // Remove from cache if it exists
+      _loadedDocumentIds.remove(familyId);
+      
+      print('TwinService: Successfully deleted family $familyId');
     } catch (e) {
+      print('TwinService: Error deleting family: $e');
       throw Exception('Error deleting family: $e');
     }
   }
 
-  /// Update a family
+  /// Update a family - IMPROVED
   Future<void> updateFamily(String familyId, TwinFamily family) async {
     try {
+      print('TwinService: Updating family with ID: $familyId');
+      
       await _firestore
           .collection('twins_submissions')
           .doc(familyId)
           .update(family.toMap());
+          
+      print('TwinService: Successfully updated family $familyId');
     } catch (e) {
+      print('TwinService: Error updating family: $e');
       throw Exception('Error updating family: $e');
     }
   }
 
-  /// Filter families based on search query
+  /// Add a new family - NEW METHOD
+  Future<String> addFamily(TwinFamily family) async {
+    try {
+      print('TwinService: Adding new family');
+      
+      final docRef = await _firestore
+          .collection('twins_submissions')
+          .add(family.toMap());
+      
+      print('TwinService: Successfully added family with ID: ${docRef.id}');
+      
+      // Reset cache to ensure new data appears
+      resetCache();
+      
+      return docRef.id;
+    } catch (e) {
+      print('TwinService: Error adding family: $e');
+      throw Exception('Error adding family: $e');
+    }
+  }
+
+  /// Filter families based on search query with improved matching
   List<TwinFamily> filterFamilies(List<TwinFamily> families, String query) {
     if (query.isEmpty) return families;
 
+    final lowercaseQuery = query.toLowerCase();
+    
     return families.where((family) {
       return family.twins.any((twin) =>
-          twin.fullName.toLowerCase().contains(query.toLowerCase()) ||
+          twin.fullName.toLowerCase().contains(lowercaseQuery) ||
           twin.phone.contains(query) ||
-          twin.district.toLowerCase().contains(query.toLowerCase()));
+          twin.district.toLowerCase().contains(lowercaseQuery) ||
+          twin.postOffice.toLowerCase().contains(lowercaseQuery) ||
+          twin.houseName.toLowerCase().contains(lowercaseQuery) ||
+          twin.state.toLowerCase().contains(lowercaseQuery));
     }).toList();
   }
 
@@ -137,7 +210,7 @@ class TwinService {
         t.pincode == first.pincode);
   }
 
-  /// Export families data to Excel (loads all data)
+  /// Export families data to Excel (loads all data) with duplicate prevention
   Future<String> exportToExcel(List<TwinFamily> families) async {
     if (families.isEmpty) {
       throw Exception('No data to export');
@@ -148,6 +221,13 @@ class TwinService {
     if (!status.isGranted) {
       throw Exception('Storage permission denied');
     }
+
+    // Remove duplicates before export using family ID
+    final Map<String, TwinFamily> uniqueFamilies = {};
+    for (final family in families) {
+      uniqueFamilies[family.id] = family;
+    }
+    final uniqueFamiliesList = uniqueFamilies.values.toList();
 
     // Create Excel workbook
     var excel = Excel.createExcel();
@@ -182,7 +262,7 @@ class TwinService {
 
     // Add data rows
     int rowIndex = 1;
-    for (TwinFamily family in families) {
+    for (TwinFamily family in uniqueFamiliesList) {
       for (Twin twin in family.twins) {
         List<dynamic> rowData = [
           family.id,

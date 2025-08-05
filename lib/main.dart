@@ -15,10 +15,12 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: Size(375, 812),
+      designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
@@ -28,17 +30,17 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             // Primary colors
             primaryColor: const Color(0xFF416587),
-            primarySwatch: MaterialColor(0xFF416587, {
-              50: const Color(0xFFE8ECF1),
-              100: const Color(0xFFC5D0E0),
-              200: const Color(0xFF9FB3CD),
-              300: const Color(0xFF7996BA),
-              400: const Color(0xFF5D7FAB),
-              500: const Color(0xFF416587), // Primary
-              600: const Color(0xFF3A5D7A),
-              700: const Color(0xFF32536C),
-              800: const Color(0xFF2A495E),
-              900: const Color(0xFF1C374B),
+            primarySwatch: const MaterialColor(0xFF416587, {
+              50: Color(0xFFE8ECF1),
+              100: Color(0xFFC5D0E0),
+              200: Color(0xFF9FB3CD),
+              300: Color(0xFF7996BA),
+              400: Color(0xFF5D7FAB),
+              500: Color(0xFF416587), // Primary
+              600: Color(0xFF3A5D7A),
+              700: Color(0xFF32536C),
+              800: Color(0xFF2A495E),
+              900: Color(0xFF1C374B),
             }),
             
             // Secondary colors
@@ -68,15 +70,15 @@ class MyApp extends StatelessWidget {
             ),
             
             // Card theme
-            cardTheme: CardTheme(
-              color: Colors.white,
-              elevation: 0,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20.r),
-                side: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-              ),
-            ),
+            // cardTheme: CardTheme(
+            //   color: Colors.white,
+            //   elevation: 0,
+            //   shadowColor: Colors.transparent,
+            //   shape: RoundedRectangleBorder(
+            //     borderRadius: BorderRadius.circular(20.r),
+            //     side: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+            //   ),
+            // ),
             
             // Elevated button theme
             elevatedButtonTheme: ElevatedButtonThemeData(
@@ -185,7 +187,7 @@ class MyApp extends StatelessWidget {
             fontFamily: 'Roboto',
             scaffoldBackgroundColor: Colors.white,
           ),
-          home: TwinsHomePage(),
+          home: const TwinsHomePage(),
         );
       },
     );

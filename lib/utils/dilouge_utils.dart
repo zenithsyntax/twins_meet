@@ -20,12 +20,12 @@ class DialogUtils {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFFEF4444).withOpacity(0.1),
+                  color: const Color(0xFFEF4444).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
                   Icons.warning_outlined,
-                  color: Color(0xFFEF4444),
+                  color: const Color(0xFFEF4444),
                   size: 24.w,
                 ),
               ),
@@ -43,7 +43,7 @@ class DialogUtils {
             'Are you sure you want to delete this family data? This action cannot be undone.',
             style: TextStyle(
               fontSize: 14.sp,
-              color: Color(0xFF6B7280),
+              color: const Color(0xFF6B7280),
             ),
           ),
           actions: [
@@ -53,17 +53,17 @@ class DialogUtils {
                 'Cancel',
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Color(0xFF6B7280),
+                  color: const Color(0xFF6B7280),
                 ),
               ),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFEF4444),
+                backgroundColor: const Color(0xFFEF4444),
                 foregroundColor: Colors.white,
               ),
-              child: Text('Delete'),
+              child: const Text('Delete'),
             ),
           ],
         );
@@ -87,12 +87,12 @@ class DialogUtils {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFF10B981).withOpacity(0.1),
+                  color: const Color(0xFF10B981).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
                   Icons.check_circle_outline,
-                  color: Color(0xFF10B981),
+                  color: const Color(0xFF10B981),
                   size: 24.w,
                 ),
               ),
@@ -114,14 +114,14 @@ class DialogUtils {
                 'Excel file has been saved successfully!',
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Color(0xFF374151),
+                  color: const Color(0xFF374151),
                 ),
               ),
               SizedBox(height: 12.h),
               Container(
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFFF3F4F6),
+                  color: const Color(0xFFF3F4F6),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Column(
@@ -132,14 +132,14 @@ class DialogUtils {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF6B7280),
+                        color: const Color(0xFF6B7280),
                       ),
                     ),
                     Text(
                       fileName,
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: Color(0xFF374151),
+                        color: const Color(0xFF374151),
                       ),
                     ),
                     SizedBox(height: 8.h),
@@ -148,7 +148,7 @@ class DialogUtils {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF6B7280),
+                        color: const Color(0xFF6B7280),
                       ),
                     ),
                     Text(
@@ -157,7 +157,7 @@ class DialogUtils {
                           : 'Documents folder',
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: Color(0xFF374151),
+                        color: const Color(0xFF374151),
                       ),
                     ),
                   ],
@@ -172,7 +172,7 @@ class DialogUtils {
                 'OK',
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Color(0xFF3B82F6),
+                  color: const Color(0xFF3B82F6),
                 ),
               ),
             ),
@@ -200,13 +200,13 @@ class DialogUtils {
           'Update functionality can be implemented here. You would typically navigate to an edit form.',
           style: TextStyle(
             fontSize: 14.sp,
-            color: Color(0xFF6B7280),
+            color: const Color(0xFF6B7280),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -218,7 +218,7 @@ class DialogUtils {
                 ),
               );
             },
-            child: Text('Update'),
+            child: const Text('Update'),
           ),
         ],
       ),

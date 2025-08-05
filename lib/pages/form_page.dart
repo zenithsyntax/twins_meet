@@ -24,7 +24,27 @@ class TwinFormData {
   }
 }
 
+class ExistingTwinData {
+  final String documentId;
+  final String fullName;
+  final String houseName;
+  final String pincode;
+  final String phone;
+  final DateTime submittedAt;
+
+  ExistingTwinData({
+    required this.documentId,
+    required this.fullName,
+    required this.houseName,
+    required this.pincode,
+    required this.phone,
+    required this.submittedAt,
+  });
+}
+
 class TwinsDataForm extends StatefulWidget {
+  const TwinsDataForm({super.key});
+
   @override
   _TwinsDataFormState createState() => _TwinsDataFormState();
 }
@@ -33,6 +53,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
   List<TwinFormData> twins = [];
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _isCheckingDuplicates = false;
 
   // Firebase Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -76,6 +97,326 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
         twins[index].dispose();
         twins.removeAt(index);
       });
+    }
+  }
+
+  // Check for existing data in Firebase
+  Future<List<ExistingTwinData>> _checkForExistingData() async {
+    List<ExistingTwinData> existingData = [];
+    
+    try {
+      for (TwinFormData twin in twins) {
+        String houseName = twin.houseNameController.text.trim().toLowerCase();
+        String pincode = twin.pincodeController.text.trim();
+        String phone = twin.phoneController.text.trim();
+
+        // Query Firebase for existing data with same house name, pincode, and phone
+        QuerySnapshot querySnapshot = await _firestore
+            .collection('twins_submissions')
+            .get();
+
+        for (QueryDocumentSnapshot doc in querySnapshot.docs) {
+          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+          
+          if (data['twins'] != null) {
+            List<dynamic> twinsInDoc = data['twins'];
+            
+            for (var existingTwin in twinsInDoc) {
+              String existingHouseName = (existingTwin['houseName'] ?? '').toString().toLowerCase();
+              String existingPincode = (existingTwin['pincode'] ?? '').toString();
+              String existingPhone = (existingTwin['phone'] ?? '').toString();
+              
+              // Check if house name, pincode, and phone match
+              if (existingHouseName == houseName && 
+                  existingPincode == pincode && 
+                  existingPhone == phone) {
+                
+                DateTime submittedAt = DateTime.now();
+                if (data['submittedAt'] != null) {
+                  submittedAt = (data['submittedAt'] as Timestamp).toDate();
+                }
+                
+                existingData.add(ExistingTwinData(
+                  documentId: doc.id,
+                  fullName: existingTwin['fullName'] ?? '',
+                  houseName: existingTwin['houseName'] ?? '',
+                  pincode: existingPincode,
+                  phone: existingPhone,
+                  submittedAt: submittedAt,
+                ));
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error checking for existing data: $e');
+    }
+    
+    return existingData;
+  }
+
+  // Show existing data popup
+  void _showExistingDataDialog(List<ExistingTwinData> existingData) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAB308).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Icon(
+                  Icons.warning_outlined,
+                  color: const Color(0xFFEAB308),
+                  size: 24.w,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  'Duplicate Data Found',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Container(
+            width: double.maxFinite,
+            constraints: BoxConstraints(maxHeight: 400.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Text(
+                //   'Found ${existingData.length} existing record(s) with similar data:',
+                //   style: TextStyle(
+                //     fontSize: 14.sp,
+                //     color: const Color(0xFF6B7280),
+                //   ),
+                // ),
+                SizedBox(height: 16.h),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: existingData.length,
+                    itemBuilder: (context, index) {
+                      ExistingTwinData data = existingData[index];
+                      return Container(
+                        margin: EdgeInsets.only(bottom: 12.h),
+                        padding: EdgeInsets.all(12.w),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          borderRadius: BorderRadius.circular(8.r),
+                          color: const Color(0xFFF9FAFB),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.person, size: 16.w, color: const Color(0xFF6B7280)),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    data.fullName,
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF374151),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8.h),
+                            Row(
+                              children: [
+                                Icon(Icons.home, size: 16.w, color: const Color(0xFF6B7280)),
+                                SizedBox(width: 8.w),
+                                Expanded(
+                                  child: Text(
+                                    data.houseName,
+                                    style: TextStyle(
+                                      fontSize: 12.sp,
+                                      color: const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4.h),
+                            Row(
+                              children: [
+                                Icon(Icons.pin_drop, size: 16.w, color: const Color(0xFF6B7280)),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  data.pincode,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                ),
+                                SizedBox(width: 16.w),
+                                Icon(Icons.phone, size: 16.w, color: const Color(0xFF6B7280)),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  data.phone,
+                                  style: TextStyle(
+                                    fontSize: 12.sp,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 4.h),
+                            Row(
+                              children: [
+                                Icon(Icons.access_time, size: 16.w, color: const Color(0xFF6B7280)),
+                                SizedBox(width: 8.w),
+                                Text(
+                                  'Submitted: ${_formatDate(data.submittedAt)}',
+                                  style: TextStyle(
+                                    fontSize: 11.sp,
+                                    color: const Color(0xFF9CA3AF),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF6B7280),
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _proceedWithSubmission();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFEAB308),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+              ),
+              child: Text('Submit Anyway'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _proceedWithSubmission() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Prepare data for Firebase
+      List<Map<String, dynamic>> twinsData = [];
+      
+      for (int i = 0; i < twins.length; i++) {
+        TwinFormData twin = twins[i];
+        twinsData.add({
+          'fullName': twin.fullNameController.text.trim(),
+          'houseName': twin.houseNameController.text.trim(),
+          'postOffice': twin.postOfficeController.text.trim(),
+          'district': twin.districtController.text.trim(),
+          'state': twin.stateController.text.trim(),
+          'country': twin.countryController.text.trim(),
+          'pincode': twin.pincodeController.text.trim(),
+          'phone': twin.phoneController.text.trim(),
+          'twinNumber': i + 1,
+        });
+      }
+
+      // Create a document with timestamp and twins data
+      Map<String, dynamic> submissionData = {
+        'twins': twinsData,
+        'totalTwins': twins.length,
+        'submittedAt': FieldValue.serverTimestamp(),
+        'submittedBy': 'user_id', // Replace with actual user ID if you have authentication
+      };
+
+      // Save to Firebase Firestore
+      DocumentReference docRef = await _firestore
+          .collection('twins_submissions')
+          .add(submissionData);
+
+      print('Data saved with ID: ${docRef.id}');
+      print('Twins Data: $twinsData');
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      // Show success dialog
+      _showSuccessDialog(docRef.id);
+
+    } catch (error) {
+      setState(() {
+        _isLoading = false;
+      });
+      
+      // Show error dialog
+      _showErrorDialog(error.toString());
+      print('Error saving data: $error');
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isCheckingDuplicates = true;
+      });
+
+      // Check for existing data first
+      List<ExistingTwinData> existingData = await _checkForExistingData();
+      
+      setState(() {
+        _isCheckingDuplicates = false;
+      });
+
+      if (existingData.isNotEmpty) {
+        // Show duplicate data dialog
+        _showExistingDataDialog(existingData);
+      } else {
+        // No duplicates found, proceed with submission
+        _proceedWithSubmission();
+      }
     }
   }
 
@@ -189,7 +530,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
           decoration: BoxDecoration(
-            color: Color(0xFF3B82F6).withOpacity(0.1),
+            color: const Color(0xFF3B82F6).withOpacity(0.1),
             borderRadius: BorderRadius.circular(20.r),
           ),
           child: Text(
@@ -197,18 +538,18 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF6E6588),
+              color: const Color(0xFF6E6588),
             ),
           ),
         ),
-        Spacer(),
+        const Spacer(),
         if (twins.length > 1)
           IconButton(
             onPressed: () => _removeTwin(index),
             icon: Icon(Icons.delete_outline, size: 20.w),
             style: IconButton.styleFrom(
-              backgroundColor: Color(0xFFFEF2F2),
-              foregroundColor: Color(0xFFEF4444),
+              backgroundColor: const Color(0xFFFEF2F2),
+              foregroundColor: const Color(0xFFEF4444),
               padding: EdgeInsets.all(8.w),
             ),
             tooltip: 'Remove Twin',
@@ -232,7 +573,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
+            color: const Color(0xFF374151),
           ),
         ),
         SizedBox(height: 8.h),
@@ -241,11 +582,11 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
           keyboardType: keyboardType,
           style: TextStyle(fontSize: 14.sp),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, size: 20.w, color: Color(0xFF6B7280)),
+            prefixIcon: Icon(icon, size: 20.w, color: const Color(0xFF6B7280)),
             hintText: 'Enter $label',
             hintStyle: TextStyle(
               fontSize: 14.sp,
-              color: Color(0xFF9CA3AF),
+              color: const Color(0xFF9CA3AF),
             ),
           ),
           validator: required
@@ -268,16 +609,16 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
   }
 
   Widget _buildAddTwinButton(int index) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () => _addTwin(index),
         icon: Icon(Icons.add, size: 18.w),
-        label: Text('Add Another Twin'),
+        label: const Text('Add Another Twin'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF416587),
+          backgroundColor: const Color(0xFF416587),
           foregroundColor: Colors.white,
-          shadowColor: Color(0xFF10B981).withOpacity(0.3),
+          shadowColor: const Color(0xFF10B981).withOpacity(0.3),
           elevation: 2,
         ),
       ),
@@ -294,13 +635,24 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, -5),
+            offset: const Offset(0, -5),
           ),
         ],
       ),
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _submitForm,
-        child: _isLoading
+        onPressed: (_isLoading || _isCheckingDuplicates) ? null : _submitForm,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF6E6588),
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          textStyle: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w600,
+          ),
+          shadowColor: const Color(0xFF1E40AF).withOpacity(0.3),
+          elevation: 3,
+        ),
+        child: (_isLoading || _isCheckingDuplicates)
             ? SizedBox(
                 height: 20.h,
                 width: 20.w,
@@ -309,80 +661,9 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               )
-            : Text('Submit All Data'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF6E6588),
-          foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: 16.h),
-          textStyle: TextStyle(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w600,
-          ),
-          shadowColor: Color(0xFF1E40AF).withOpacity(0.3),
-          elevation: 3,
-        ),
+            : Text(_isCheckingDuplicates ? 'Checking for duplicates...' : 'Submit All Data'),
       ),
     );
-  }
-
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        // Prepare data for Firebase
-        List<Map<String, dynamic>> twinsData = [];
-        
-        for (int i = 0; i < twins.length; i++) {
-          TwinFormData twin = twins[i];
-          twinsData.add({
-            'fullName': twin.fullNameController.text.trim(),
-            'houseName': twin.houseNameController.text.trim(),
-            'postOffice': twin.postOfficeController.text.trim(),
-            'district': twin.districtController.text.trim(),
-            'state': twin.stateController.text.trim(),
-            'country': twin.countryController.text.trim(),
-            'pincode': twin.pincodeController.text.trim(),
-            'phone': twin.phoneController.text.trim(),
-            'twinNumber': i + 1,
-          });
-        }
-
-        // Create a document with timestamp and twins data
-        Map<String, dynamic> submissionData = {
-          'twins': twinsData,
-          'totalTwins': twins.length,
-          'submittedAt': FieldValue.serverTimestamp(),
-          'submittedBy': 'user_id', // Replace with actual user ID if you have authentication
-        };
-
-        // Save to Firebase Firestore
-        DocumentReference docRef = await _firestore
-            .collection('twins_submissions')
-            .add(submissionData);
-
-        print('Data saved with ID: ${docRef.id}');
-        print('Twins Data: $twinsData');
-
-        setState(() {
-          _isLoading = false;
-        });
-
-        // Show success dialog
-        _showSuccessDialog(docRef.id);
-
-      } catch (error) {
-        setState(() {
-          _isLoading = false;
-        });
-        
-        // Show error dialog
-        _showErrorDialog(error.toString());
-        print('Error saving data: $error');
-      }
-    }
   }
 
   void _showSuccessDialog(String documentId) {
@@ -399,12 +680,12 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFF10B981).withOpacity(0.1),
+                  color: const Color(0xFF10B981).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
                   Icons.check_circle_outline,
-                  color: Color(0xFF10B981),
+                  color: const Color(0xFF10B981),
                   size: 24.w,
                 ),
               ),
@@ -426,7 +707,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
                 'Data for ${twins.length} twin(s) has been successfully saved to Firebase.',
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Color(0xFF6B7280),
+                  color: const Color(0xFF6B7280),
                 ),
               ),
               SizedBox(height: 8.h),
@@ -434,7 +715,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
                 'Document ID: $documentId',
                 style: TextStyle(
                   fontSize: 12.sp,
-                  color: Color(0xFF9CA3AF),
+                  color: const Color(0xFF9CA3AF),
                   fontFamily: 'monospace',
                 ),
               ),
@@ -458,7 +739,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF6B7280),
+                  color: const Color(0xFF6B7280),
                 ),
               ),
             ),
@@ -467,12 +748,12 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
                 Navigator.pop(context);
                 Navigator.of(context).pop(true);
               },
-              child: Text('Done'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF10B981),
+                backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               ),
+              child: Text('Done'),
             ),
           ],
         );
@@ -493,12 +774,12 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFFEF4444).withOpacity(0.1),
+                  color: const Color(0xFFEF4444).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
                   Icons.error_outline,
-                  color: Color(0xFFEF4444),
+                  color: const Color(0xFFEF4444),
                   size: 24.w,
                 ),
               ),
@@ -516,7 +797,7 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
             'Failed to save data to Firebase:\n$error',
             style: TextStyle(
               fontSize: 14.sp,
-              color: Color(0xFF6B7280),
+              color: const Color(0xFF6B7280),
             ),
           ),
           actions: [
@@ -524,12 +805,12 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('OK'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFEF4444),
+                backgroundColor: const Color(0xFFEF4444),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               ),
+              child: Text('OK'),
             ),
           ],
         );
@@ -541,9 +822,9 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Twins Data'),
+        title: const Text('Twins Data'),
         centerTitle: true,
-        backgroundColor: Color(0xFF6E6588),
+        backgroundColor: const Color(0xFF6E6588),
       ),
       body: Form(
         key: _formKey,
@@ -560,14 +841,14 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF374151),
+                      color: const Color(0xFF374151),
                     ),
                   ),
                   SizedBox(height: 8.h),
                   LinearProgressIndicator(
                     value: twins.length / 5, 
-                    backgroundColor: Color(0xFFE5E7EB),
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6E6588)),
+                    backgroundColor: const Color(0xFFE5E7EB),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF6E6588)),
                   ),
                 ],
               ),
@@ -583,7 +864,6 @@ class _TwinsDataFormState extends State<TwinsDataForm> {
           ],
         ),
       ),
-      
     );
   }
 }

@@ -38,11 +38,15 @@ class _TwinListPageState extends State<TwinListPage> {
   
   List<TwinFamily> _allFamilies = [];
   List<TwinFamily> _filteredFamilies = [];
-  List<bool> _expandedStates = [];
+  // Use Map to track expanded states by family ID instead of index
+  final Map<String, bool> _expandedStates = {};
   DocumentSnapshot? _lastDocument;
   
   // Search mode
   bool _isSearchMode = false;
+  
+  // Set to track loaded family IDs to prevent duplicates
+  final Set<String> _loadedFamilyIds = {};
 
   @override
   void initState() {
@@ -70,21 +74,41 @@ class _TwinListPageState extends State<TwinListPage> {
     });
   }
 
-  // Load initial families with pagination
+  // Load initial families with pagination - FIXED
   Future<void> _loadInitialFamilies() async {
     try {
       setState(() {
         _isLoading = true;
         _hasMoreData = true;
         _lastDocument = null;
+        // Clear previous data to avoid duplicates
+        _allFamilies.clear();
+        _filteredFamilies.clear();
+        _expandedStates.clear();
+        _loadedFamilyIds.clear();
       });
+
+      // IMPORTANT: Reset the service cache to ensure fresh data
+      _twinService.resetCache();
 
       final result = await _twinService.loadFamiliesFromFirebase();
 
+      // Filter out any potential duplicates using family ID
+      final uniqueFamilies = <String, TwinFamily>{};
+      for (final family in result.families) {
+        if (!_loadedFamilyIds.contains(family.id)) {
+          uniqueFamilies[family.id] = family;
+          _loadedFamilyIds.add(family.id);
+        }
+      }
+
       setState(() {
-        _allFamilies = result.families;
-        _filteredFamilies = result.families;
-        _expandedStates = List.generate(result.families.length, (_) => false);
+        _allFamilies = uniqueFamilies.values.toList();
+        _filteredFamilies = uniqueFamilies.values.toList();
+        // Initialize expanded states for each family ID
+        for (final family in _allFamilies) {
+          _expandedStates[family.id] = false;
+        }
         _lastDocument = result.lastDocument;
         _hasMoreData = result.hasMore;
         _isLoading = false;
@@ -99,7 +123,7 @@ class _TwinListPageState extends State<TwinListPage> {
     }
   }
 
-  // Load more families (pagination)
+  // Load more families (pagination) - FIXED
   Future<void> _loadMoreFamilies() async {
     if (_isLoadingMore || !_hasMoreData || _isSearchMode) return;
 
@@ -112,13 +136,23 @@ class _TwinListPageState extends State<TwinListPage> {
         lastDocument: _lastDocument,
       );
 
+      // Filter out duplicates based on family ID
+      final newFamilies = <TwinFamily>[];
+      for (final family in result.families) {
+        if (!_loadedFamilyIds.contains(family.id)) {
+          newFamilies.add(family);
+          _loadedFamilyIds.add(family.id);
+        }
+      }
+
       setState(() {
-        _allFamilies.addAll(result.families);
+        _allFamilies.addAll(newFamilies);
         if (_searchQuery.isEmpty) {
-          _filteredFamilies.addAll(result.families);
-          _expandedStates.addAll(
-            List.generate(result.families.length, (_) => false)
-          );
+          _filteredFamilies.addAll(newFamilies);
+        }
+        // Initialize expanded states for new families
+        for (final family in newFamilies) {
+          _expandedStates[family.id] = false;
         }
         _lastDocument = result.lastDocument;
         _hasMoreData = result.hasMore;
@@ -138,7 +172,7 @@ class _TwinListPageState extends State<TwinListPage> {
   }
 
   // Handle search with debouncing
-  void _filterFamilies(String query) async {
+  Future<void> _filterFamilies(String query) async {
     setState(() {
       _searchQuery = query;
       _isSearchMode = query.isNotEmpty;
@@ -148,7 +182,10 @@ class _TwinListPageState extends State<TwinListPage> {
       // Return to paginated view
       setState(() {
         _filteredFamilies = _allFamilies;
-        _expandedStates = List.generate(_allFamilies.length, (_) => false);
+        // Reset expanded states but keep existing ones
+        for (final family in _allFamilies) {
+          _expandedStates.putIfAbsent(family.id, () => false);
+        }
         _isSearchMode = false;
       });
     } else {
@@ -160,9 +197,18 @@ class _TwinListPageState extends State<TwinListPage> {
 
         final searchResults = await _twinService.searchFamilies(query);
         
+        // Filter out duplicates from search results
+        final uniqueSearchResults = <String, TwinFamily>{};
+        for (final family in searchResults) {
+          uniqueSearchResults[family.id] = family;
+        }
+        
         setState(() {
-          _filteredFamilies = searchResults;
-          _expandedStates = List.generate(searchResults.length, (_) => false);
+          _filteredFamilies = uniqueSearchResults.values.toList();
+          // Initialize expanded states for search results
+          for (final family in _filteredFamilies) {
+            _expandedStates.putIfAbsent(family.id, () => false);
+          }
           _isLoading = false;
         });
       } catch (e) {
@@ -222,7 +268,6 @@ class _TwinListPageState extends State<TwinListPage> {
     }
   }
 
-  // Rest of your existing methods remain the same...
   Future<void> _checkDownloadPermission() async {
     try {
       PermissionStatus status;
@@ -280,14 +325,14 @@ class _TwinListPageState extends State<TwinListPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Later'),
+              child: const Text('Later'),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 openAppSettings();
               },
-              child: Text('Open Settings'),
+              child: const Text('Open Settings'),
             ),
           ],
         );
@@ -326,7 +371,7 @@ class _TwinListPageState extends State<TwinListPage> {
                       icon: Icon(Icons.download, size: 20.sp),
                       label: Text('Download', style: TextStyle(fontSize: 14.sp)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF3B82F6),
+                        backgroundColor: const Color(0xFF3B82F6),
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
@@ -342,7 +387,7 @@ class _TwinListPageState extends State<TwinListPage> {
                       icon: Icon(Icons.share, size: 20.sp),
                       label: Text('Share', style: TextStyle(fontSize: 14.sp)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF10B981),
+                        backgroundColor: const Color(0xFF10B981),
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
@@ -355,7 +400,7 @@ class _TwinListPageState extends State<TwinListPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
           ],
         );
@@ -460,7 +505,7 @@ class _TwinListPageState extends State<TwinListPage> {
                   style: TextStyle(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF3B82F6),
+                    color: const Color(0xFF3B82F6),
                   ),
                 ),
               ),
@@ -474,7 +519,7 @@ class _TwinListPageState extends State<TwinListPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -482,9 +527,9 @@ class _TwinListPageState extends State<TwinListPage> {
                 _shareExcelFromPath(filePath);
               },
               icon: Icon(Icons.share, size: 16.sp),
-              label: Text('Share File'),
+              label: const Text('Share File'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF10B981),
+                backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
               ),
             ),
@@ -532,7 +577,7 @@ class _TwinListPageState extends State<TwinListPage> {
           }
         }
 
-        filePath = '${downloadsDirectory!.path}/$fileName';
+        filePath = '${downloadsDirectory.path}/$fileName';
       } else {
         final directory = await getApplicationDocumentsDirectory();
         filePath = '${directory.path}/$fileName';
@@ -548,15 +593,14 @@ class _TwinListPageState extends State<TwinListPage> {
     }
   }
 
-  Future<void> _deleteFamily(String familyId, int index) async {
+  Future<void> _deleteFamily(String familyId) async {
     try {
       await _twinService.deleteFamily(familyId);
       setState(() {
         _allFamilies.removeWhere((family) => family.id == familyId);
         _filteredFamilies.removeWhere((family) => family.id == familyId);
-        if (index < _expandedStates.length) {
-          _expandedStates.removeAt(index);
-        }
+        _expandedStates.remove(familyId);
+        _loadedFamilyIds.remove(familyId);
       });
       if (mounted) {
         SnackBarUtils.showSuccess(context, 'Family data deleted successfully');
@@ -568,10 +612,10 @@ class _TwinListPageState extends State<TwinListPage> {
     }
   }
 
-  Future<void> _showDeleteConfirmation(String familyId, int index) async {
+  Future<void> _showDeleteConfirmation(String familyId) async {
     final bool? confirm = await DialogUtils.showDeleteConfirmation(context);
     if (confirm == true) {
-      await _deleteFamily(familyId, index);
+      await _deleteFamily(familyId);
     }
   }
 
@@ -585,7 +629,7 @@ class _TwinListPageState extends State<TwinListPage> {
             'Found ${_filteredFamilies.length} families',
             style: TextStyle(
               fontSize: 14.sp,
-              color: Color(0xFF6B7280),
+              color: const Color(0xFF6B7280),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -594,18 +638,18 @@ class _TwinListPageState extends State<TwinListPage> {
               ' for "$_searchQuery"',
               style: TextStyle(
                 fontSize: 14.sp,
-                color: Color(0xFF3B82F6),
+                color: const Color(0xFF3B82F6),
                 fontWeight: FontWeight.w500,
               ),
             ),
           ],
           if (!_isSearchMode && _hasMoreData) ...[
-            Spacer(),
+            const Spacer(),
             Text(
               'Loading more...',
               style: TextStyle(
                 fontSize: 12.sp,
-                color: Color(0xFF9CA3AF),
+                color: const Color(0xFF9CA3AF),
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -616,7 +660,7 @@ class _TwinListPageState extends State<TwinListPage> {
   }
 
   Widget _buildPermissionInfo() {
-    if (_hasDownloadPermission) return SizedBox.shrink();
+    if (_hasDownloadPermission) return const SizedBox.shrink();
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
@@ -658,7 +702,7 @@ class _TwinListPageState extends State<TwinListPage> {
   Widget _buildFamilyList() {
     return RefreshIndicator(
       onRefresh: _loadInitialFamilies,
-      color: Color(0xFF6E6588),
+      color: const Color(0xFF6E6588),
       child: ListView.builder(
         controller: _scrollController,
         padding: EdgeInsets.only(bottom: 80.h), // Space for FAB
@@ -668,7 +712,7 @@ class _TwinListPageState extends State<TwinListPage> {
           if (index == _filteredFamilies.length) {
             return Container(
               padding: EdgeInsets.all(20.w),
-              child: Center(
+              child: const Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6E6588)),
                 ),
@@ -677,15 +721,16 @@ class _TwinListPageState extends State<TwinListPage> {
           }
 
           final family = _filteredFamilies[index];
+          // Use family ID instead of index for expanded state
+          final isExpanded = _expandedStates[family.id] ?? false;
+          
           return FamilyCard(
             family: family,
-            isExpanded: index < _expandedStates.length ? _expandedStates[index] : false,
+            isExpanded: isExpanded,
             onToggleExpanded: () {
-              if (index < _expandedStates.length) {
-                setState(() {
-                  _expandedStates[index] = !_expandedStates[index];
-                });
-              }
+              setState(() {
+                _expandedStates[family.id] = !isExpanded;
+              });
             },
             onUpdate: () async {
               final result = await Navigator.push(
@@ -696,13 +741,10 @@ class _TwinListPageState extends State<TwinListPage> {
               );
               if (result == true) {
                 _checkDownloadPermission();
-                _loadInitialFamilies();
+                _loadInitialFamilies(); // This will now properly refresh with new data
               }
             },
-            onDelete: () => _showDeleteConfirmation(
-              family.id,
-              index,
-            ),
+            onDelete: () => _showDeleteConfirmation(family.id),
             showSharedAddress: _twinService.hasSameAddress(family.twins),
             formatDate: _twinService.formatDate,
           );
@@ -714,7 +756,7 @@ class _TwinListPageState extends State<TwinListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF9FAFB),
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: Text(
           'Twins Directory',
@@ -724,13 +766,13 @@ class _TwinListPageState extends State<TwinListPage> {
             color: Colors.white,
           ),
         ),
-        backgroundColor: Color(0xFF6E6588),
+        backgroundColor: const Color(0xFF6E6588),
         elevation: 0,
         centerTitle: true,
         actions: [
           IconButton(
             onPressed: _isExporting ? null : _showExportOptionsDialog,
-            icon: Icon(Icons.download, color: Colors.white),
+            icon: const Icon(Icons.download, color: Colors.white),
             tooltip: 'Download to excel',
           ),
         ],
@@ -765,11 +807,17 @@ class _TwinListPageState extends State<TwinListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          // IMPORTANT: Listen for result and refresh if data was added
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => TwinsDataForm()),
           );
+          
+          // If data was added successfully, refresh the list
+          if (result == true) {
+            _loadInitialFamilies();
+          }
         },
         child: Container(
           width: 56.w,

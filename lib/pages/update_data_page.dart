@@ -51,7 +51,7 @@ class UpdateTwinsDataPage extends StatefulWidget {
 class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
   List<UpdateTwinFormData> twins = [];
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+  final bool _isLoading = false;
   bool _isUpdating = false;
 
   // Firebase Firestore instance
@@ -216,7 +216,7 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
         Container(
           padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
           decoration: BoxDecoration(
-            color: Color(0xFF3B82F6).withOpacity(0.1),
+            color: const Color(0xFF3B82F6).withOpacity(0.1),
             borderRadius: BorderRadius.circular(20.r),
           ),
           child: Text(
@@ -224,18 +224,18 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF6E6588)
+              color: const Color(0xFF6E6588)
             ),
           ),
         ),
-        Spacer(),
+        const Spacer(),
         if (twins.length > 1)
           IconButton(
             onPressed: () => _removeTwin(index),
             icon: Icon(Icons.delete_outline, size: 20.w),
             style: IconButton.styleFrom(
-              backgroundColor: Color(0xFFFEF2F2),
-              foregroundColor: Color(0xFFEF4444),
+              backgroundColor: const Color(0xFFFEF2F2),
+              foregroundColor: const Color(0xFFEF4444),
               padding: EdgeInsets.all(8.w),
             ),
             tooltip: 'Remove Twin',
@@ -259,7 +259,7 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
           style: TextStyle(
             fontSize: 14.sp,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
+            color: const Color(0xFF374151),
           ),
         ),
         SizedBox(height: 8.h),
@@ -268,11 +268,11 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
           keyboardType: keyboardType,
           style: TextStyle(fontSize: 14.sp),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, size: 20.w, color: Color(0xFF6B7280)),
+            prefixIcon: Icon(icon, size: 20.w, color: const Color(0xFF6B7280)),
             hintText: 'Enter $label',
             hintStyle: TextStyle(
               fontSize: 14.sp,
-              color: Color(0xFF9CA3AF),
+              color: const Color(0xFF9CA3AF),
             ),
           ),
           validator: required
@@ -295,16 +295,16 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
   }
 
   Widget _buildAddTwinButton(int index) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () => _addTwin(index),
         icon: Icon(Icons.add, size: 18.w),
-        label: Text('Add Another Twin'),
+        label: const Text('Add Another Twin'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF416587),
+          backgroundColor: const Color(0xFF416587),
           foregroundColor: Colors.white,
-          shadowColor: Color(0xFF416587).withOpacity(0.3),
+          shadowColor: const Color(0xFF416587).withOpacity(0.3),
           elevation: 2,
         ),
       ),
@@ -321,7 +321,7 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, -5),
+            offset: const Offset(0, -5),
           ),
         ],
       ),
@@ -330,10 +330,9 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
           Expanded(
             child: OutlinedButton(
               onPressed: _isUpdating ? null : () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Color(0xFF6B7280),
-                side: BorderSide(color: Color(0xFFD1D5DB)),
+                foregroundColor: const Color(0xFF6B7280),
+                side: const BorderSide(color: Color(0xFFD1D5DB)),
                 padding: EdgeInsets.symmetric(vertical: 16.h),
                 textStyle: TextStyle(
                   fontSize: 16.sp,
@@ -343,6 +342,7 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
                   borderRadius: BorderRadius.circular(8.r),
                 ),
               ),
+              child: Text('Cancel'),
             ),
           ),
           SizedBox(width: 16.w),
@@ -350,6 +350,20 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
             flex: 2,
             child: ElevatedButton(
               onPressed: _isUpdating ? null : _updateForm,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6E6588),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 16.h),
+                textStyle: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+                shadowColor: const Color(0xFF1E40AF).withOpacity(0.3),
+                elevation: 3,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
               child: _isUpdating
                   ? SizedBox(
                       height: 20.h,
@@ -360,20 +374,6 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
                       ),
                     )
                   : Text('Update Data'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF6E6588),
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-                textStyle: TextStyle(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-                shadowColor: Color(0xFF1E40AF).withOpacity(0.3),
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-              ),
             ),
           ),
         ],
@@ -457,12 +457,12 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFF10B981).withOpacity(0.1),
+                  color: const Color(0xFF10B981).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
                   Icons.check_circle_outline,
-                  color: Color(0xFF10B981),
+                  color: const Color(0xFF10B981),
                   size: 24.w,
                 ),
               ),
@@ -484,7 +484,7 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
                 'Data for ${twins.length} twin(s) has been successfully updated in Firebase.',
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Color(0xFF6B7280),
+                  color: const Color(0xFF6B7280),
                 ),
               ),
               SizedBox(height: 8.h),
@@ -492,7 +492,7 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
                 'Document ID: ${widget.family.id}',
                 style: TextStyle(
                   fontSize: 12.sp,
-                  color: Color(0xFF9CA3AF),
+                  color: const Color(0xFF9CA3AF),
                   fontFamily: 'monospace',
                 ),
               ),
@@ -504,12 +504,12 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
                 Navigator.of(context).pop(); // Close dialog
                 Navigator.of(context).pop(true); // Return to previous page with success flag
               },
-              child: Text('Done'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF10B981),
+                backgroundColor: const Color(0xFF10B981),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               ),
+              child: Text('Done'),
             ),
           ],
         );
@@ -530,12 +530,12 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFFEF4444).withOpacity(0.1),
+                  color: const Color(0xFFEF4444).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
                   Icons.error_outline,
-                  color: Color(0xFFEF4444),
+                  color: const Color(0xFFEF4444),
                   size: 24.w,
                 ),
               ),
@@ -553,7 +553,7 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
             'Failed to update data in Firebase:\n$error',
             style: TextStyle(
               fontSize: 14.sp,
-              color: Color(0xFF6B7280),
+              color: const Color(0xFF6B7280),
             ),
           ),
           actions: [
@@ -561,12 +561,12 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('OK'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFEF4444),
+                backgroundColor: const Color(0xFFEF4444),
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               ),
+              child: Text('OK'),
             ),
           ],
         );
@@ -578,7 +578,7 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(20.w),
-      color: Color(0xFFF8FAFC),
+      color: const Color(0xFFF8FAFC),
       child: Column(
         children: [
           Row(
@@ -586,12 +586,12 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFF3B82F6).withOpacity(0.1),
+                  color: const Color(0xFF3B82F6).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
                   Icons.edit_outlined,
-                  color: Color(0xFF6E6588),
+                  color: const Color(0xFF6E6588),
                   size: 20.w,
                 ),
               ),
@@ -605,14 +605,14 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF374151),
+                        color: const Color(0xFF374151),
                       ),
                     ),
                     Text(
                       'Originally submitted: ${_formatDate(widget.family.submittedAt)}',
                       style: TextStyle(
                         fontSize: 12.sp,
-                        color: Color(0xFF6B7280),
+                        color: const Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -623,8 +623,8 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
           SizedBox(height: 12.h),
           LinearProgressIndicator(
             value: twins.length / 10, // Adjust max as needed
-            backgroundColor: Color(0xFFE5E7EB),
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6E6588)),
+            backgroundColor: const Color(0xFFE5E7EB),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF6E6588)),
           ),
         ],
       ),
@@ -639,15 +639,15 @@ class _UpdateTwinsDataPageState extends State<UpdateTwinsDataPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Update Twins Data'),
+        title: const Text('Update Twins Data'),
         centerTitle: true,
         backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF374151),
+        foregroundColor: const Color(0xFF374151),
         elevation: 0,
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(1.0),
+          preferredSize: const Size.fromHeight(1.0),
           child: Container(
-            color: Color(0xFFE5E7EB),
+            color: const Color(0xFFE5E7EB),
             height: 1.0,
           ),
         ),

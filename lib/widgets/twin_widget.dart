@@ -5,7 +5,6 @@ import 'package:twins_meet/pages/list_page.dart';
 import 'package:twins_meet/services/url_launcher.dart';
 import 'dart:io';
 
-
 class TwinWidgets {
   static Widget buildSearchBar({
     required TextEditingController controller,
@@ -23,12 +22,12 @@ class TwinWidgets {
           hintText: 'Search by name, phone, or district...',
           hintStyle: TextStyle(
             fontSize: 14.sp,
-            color: Color(0xFF9CA3AF),
+            color: const Color(0xFF9CA3AF),
           ),
           prefixIcon: Icon(
             Icons.search,
             size: 20.w,
-            color: Color(0xFF6B7280),
+            color: const Color(0xFF6B7280),
           ),
           suffixIcon: searchQuery.isNotEmpty
               ? IconButton(
@@ -36,23 +35,23 @@ class TwinWidgets {
                   icon: Icon(
                     Icons.clear,
                     size: 20.w,
-                    color: Color(0xFF6B7280),
+                    color: const Color(0xFF6B7280),
                   ),
                 )
               : null,
           filled: true,
-          fillColor: Color(0xFFF9FAFB),
+          fillColor: const Color(0xFFF9FAFB),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(color: Color(0xFFE5E7EB)),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(color: Color(0xFFE5E7EB)),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12.r),
-            borderSide: BorderSide(color: Color(0xFF6E6588), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF6E6588), width: 2),
           ),
         ),
       ),
@@ -71,7 +70,7 @@ class TwinWidgets {
             ? SizedBox(
                 width: 20.w,
                 height: 20.h,
-                child: CircularProgressIndicator(
+                child: const CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
@@ -90,7 +89,7 @@ class TwinWidgets {
           ),
         ),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF059669),
+          backgroundColor: const Color(0xFF059669),
           padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 20.w),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8.r),
@@ -106,7 +105,7 @@ class TwinWidgets {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(
               Color(0xFF3B82F6),
             ),
@@ -116,7 +115,7 @@ class TwinWidgets {
             'Loading families...',
             style: TextStyle(
               fontSize: 14.sp,
-              color: Color(0xFF6B7280),
+              color: const Color(0xFF6B7280),
             ),
           ),
         ],
@@ -132,7 +131,7 @@ class TwinWidgets {
           Icon(
             Icons.family_restroom,
             size: 64.w,
-            color: Color(0xFFD1D5DB),
+            color: const Color(0xFFD1D5DB),
           ),
           SizedBox(height: 16.h),
           Text(
@@ -142,7 +141,7 @@ class TwinWidgets {
             style: TextStyle(
               fontSize: 16.sp,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF6B7280),
+              color: const Color(0xFF6B7280),
             ),
           ),
           SizedBox(height: 8.h),
@@ -152,7 +151,7 @@ class TwinWidgets {
                 : 'Try adjusting your search terms',
             style: TextStyle(
               fontSize: 14.sp,
-              color: Color(0xFF9CA3AF),
+              color: const Color(0xFF9CA3AF),
             ),
           ),
         ],
@@ -186,7 +185,7 @@ class FamilyCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
       child: Card(
-        elevation: 2,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.r),
         ),
@@ -210,12 +209,12 @@ class FamilyCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(12.w),
                 decoration: BoxDecoration(
-                  color: Color(0xFF3B82F6).withOpacity(0.1),
+                  color: const Color(0xFF3B82F6).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
                   Icons.family_restroom,
-                  color: Color(0xFF6E6588),
+                  color: const Color(0xFF6E6588),
                   size: 24.w,
                 ),
               ),
@@ -229,7 +228,7 @@ class FamilyCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF111827),
+                        color: const Color(0xFF111827),
                       ),
                     ),
                     SizedBox(height: 4.h),
@@ -237,7 +236,7 @@ class FamilyCard extends StatelessWidget {
                       family.twins.map((t) => t.fullName).join(', '),
                       style: TextStyle(
                         fontSize: 14.sp,
-                        color: Color(0xFF6B7280),
+                        color: const Color(0xFF6B7280),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -250,7 +249,7 @@ class FamilyCard extends StatelessWidget {
                 icon: Icon(
                   isExpanded ? Icons.expand_less : Icons.expand_more,
                   size: 24.w,
-                  color: Color(0xFF6B7280),
+                  color: const Color(0xFF6B7280),
                 ),
               ),
             ],
@@ -284,22 +283,21 @@ class FamilyCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Divider(color: Color(0xFFE5E7EB)),
+          const Divider(color: Color(0xFFE5E7EB)),
           SizedBox(height: 16.h),
-          
+
           // Twins Details
           for (int i = 0; i < family.twins.length; i++)
             TwinDetailsWidget(
               twin: family.twins[i],
               showAddress: !showSharedAddress,
             ),
-          
+
           // Shared Address
-          if (showSharedAddress) 
-            SharedAddressWidget(twin: family.twins.first),
-          
+          if (showSharedAddress) SharedAddressWidget(twin: family.twins.first),
+
           SizedBox(height: 20.h),
-          
+
           // Action Buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -308,10 +306,10 @@ class FamilyCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onUpdate,
                   icon: Icon(Icons.edit_outlined, size: 18.w),
-                  label: Text('Update'),
+                  label: const Text('Update'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF3B82F6),
-                    side: BorderSide(color: Color(0xFF3B82F6)),
+                    foregroundColor: const Color(0xFF3B82F6),
+                    side: const BorderSide(color: Color(0xFF3B82F6)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
@@ -324,10 +322,10 @@ class FamilyCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onDelete,
                   icon: Icon(Icons.delete_outline, size: 18.w),
-                  label: Text('Delete'),
+                  label: const Text('Delete'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFFEF4444),
-                    side: BorderSide(color: Color(0xFFEF4444)),
+                    foregroundColor: const Color(0xFFEF4444),
+                    side: const BorderSide(color: Color(0xFFEF4444)),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
@@ -359,7 +357,7 @@ class TwinDetailsWidget extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 16.h),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Color(0xFFF9FAFB),
+        color: const Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Column(
@@ -370,7 +368,7 @@ class TwinDetailsWidget extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: Color(0xFF6E6588),
+                  color: const Color(0xFF6E6588),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
@@ -389,29 +387,30 @@ class TwinDetailsWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF111827),
+                    color: const Color(0xFF111827),
                   ),
                 ),
               ),
             ],
           ),
           SizedBox(height: 12.h),
-          
+
           Row(
             children: [
-              Icon(Icons.phone_outlined, size: 16.w, color: Color(0xFF6B7280)),
+              Icon(Icons.phone_outlined,
+                  size: 16.w, color: const Color(0xFF6B7280)),
               SizedBox(width: 8.w),
               Text(
                 twin.phone,
                 style: TextStyle(
                   fontSize: 14.sp,
-                  color: Color(0xFF374151),
+                  color: const Color(0xFF374151),
                 ),
               ),
             ],
           ),
           SizedBox(height: 12.h),
-          
+
           // Contact Buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -420,7 +419,7 @@ class TwinDetailsWidget extends StatelessWidget {
                 child: ContactButton(
                   icon: Icons.call,
                   label: 'Call',
-                  color: Color(0xFF10B981),
+                  color: const Color(0xFF10B981),
                   onPressed: () => UrlLauncherService().launchPhone(twin.phone),
                 ),
               ),
@@ -429,7 +428,7 @@ class TwinDetailsWidget extends StatelessWidget {
                 child: ContactButton(
                   icon: Icons.sms,
                   label: 'message',
-                  color: Color(0xFF3B82F6),
+                  color: const Color(0xFF3B82F6),
                   onPressed: () => UrlLauncherService().launchSMS(twin.phone),
                 ),
               ),
@@ -444,7 +443,7 @@ class TwinDetailsWidget extends StatelessWidget {
               // ),
             ],
           ),
-          
+
           // Individual Address (if not shared)
           if (showAddress) ...[
             SizedBox(height: 12.h),
@@ -506,7 +505,7 @@ class SharedAddressWidget extends StatelessWidget {
       margin: EdgeInsets.only(top: 8.h, bottom: 8.h),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Color(0xFFF0F9FF),
+        color: const Color(0xFFF0F9FF),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Column(
@@ -517,7 +516,7 @@ class SharedAddressWidget extends StatelessWidget {
               Icon(
                 Icons.home_outlined,
                 size: 16.w,
-                color: Color(0xFF0284C7),
+                color: const Color(0xFF0284C7),
               ),
               SizedBox(width: 8.w),
               Text(
@@ -525,7 +524,7 @@ class SharedAddressWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF0284C7),
+                  color: const Color(0xFF0284C7),
                 ),
               ),
             ],
@@ -573,7 +572,7 @@ class AddressInfoWidget extends StatelessWidget {
               '$label:',
               style: TextStyle(
                 fontSize: 12.sp,
-                color: Color(0xFF6B7280),
+                color: const Color(0xFF6B7280),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -583,7 +582,7 @@ class AddressInfoWidget extends StatelessWidget {
               value,
               style: TextStyle(
                 fontSize: 12.sp,
-                color: Color(0xFF374151),
+                color: const Color(0xFF374151),
               ),
             ),
           ),
